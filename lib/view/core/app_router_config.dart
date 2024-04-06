@@ -4,7 +4,7 @@ import 'package:drive_ease_main/view/screens/register_screen.dart';
 import 'package:drive_ease_main/view/screens/screen_home.dart';
 import 'package:drive_ease_main/view/screens/screen_otp_verifcation.dart';
 import 'package:drive_ease_main/view/screens/screen_splash.dart';
-import 'package:drive_ease_main/view/screens/screenlogin.dart';
+import 'package:drive_ease_main/view/screens/screen_login.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';

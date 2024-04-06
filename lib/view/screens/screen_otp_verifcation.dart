@@ -1,18 +1,19 @@
-import 'package:drive_ease_main/viewModel/connectivity_provider.dart';
-import 'package:drive_ease_main/view/screens/register_screen.dart';
-import 'package:drive_ease_main/view/screens/screenlogin.dart';
-import 'package:drive_ease_main/viewModel/page_transition.dart';
+import 'package:drive_ease_main/model/user_model.dart';
+import 'package:drive_ease_main/view/core/app_router_const.dart';
+import 'package:drive_ease_main/view/providers/connectivity_provider.dart';
+import 'package:drive_ease_main/view/providers/firebase_auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../core/appcolors.dart';
-import '../widgets/networkerror.dart';
+import '../widgets/network_error.dart';
 import '../widgets/widgets.dart';
 
-class ScreenOtpVerification extends StatelessWidget {
+class ScreenOtpVerification extends StatefulWidget {
   final String phoneNo;
   final bool isFromRegistration;
   final String? name;
@@ -23,8 +24,14 @@ class ScreenOtpVerification extends StatelessWidget {
       required this.isFromRegistration});
 
   @override
+  State<ScreenOtpVerification> createState() => _ScreenOtpVerificationState();
+}
+
+class _ScreenOtpVerificationState extends State<ScreenOtpVerification> {
+  final TextEditingController otpController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  @override
   Widget build(BuildContext context) {
-    final TextEditingController otpController = TextEditingController();
     final defaultPinTheme = PinTheme(
       width: 50,
       height: 52,
@@ -55,8 +62,9 @@ class ScreenOtpVerification extends StatelessWidget {
         decoration: const BoxDecoration(
           gradient: AppColors.primaryGradient,
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
             child: Column(
               children: [
                 backButton(context),
@@ -77,21 +85,21 @@ class ScreenOtpVerification extends StatelessWidget {
                             context: context,
                             message: 'Please enter a valid OTP');
                       } else {
-                        // final auth =
-                        //     Provider.of<FirebaseAuthProvider>(context, listen: false);
                         if (!connectivity.isDeviceConnected) {
                           networkDialog(context);
                         } else {
-                          // if (isFromRegistration) {
-                          //   final driverdata = DriverDetails(
-                          //       fullName: name!, phoneNumber: phoneNo);
-                          //   auth.verifyOTPSignIn(
-                          //       context: context,
-                          //       otp: otp,
-                          //       driverdata: driverdata);
-                          // } else {
-                          //   auth.verifyOTPLogIn(context, otp: otp);
-                          //}
+                          final auth = Provider.of<FirebaseAuthProvider>(
+                              context,
+                              listen: false);
+                          if (widget.isFromRegistration) {
+                            final userData = UserModel(
+                                name: widget.name!,
+                                phoneNumber: widget.phoneNo);
+                            auth.verifyOTPSignIn(
+                                context: context, otp: otp, userData: userData);
+                          } else {
+                            auth.verifyOTPLogIn(context: context, otp: otp);
+                          }
                         }
                       }
                     },
@@ -127,36 +135,39 @@ class ScreenOtpVerification extends StatelessWidget {
                   );
                 }),
                 const SizedBox(height: 18),
-                Padding(
-                  padding: EdgeInsets.only(left: Adaptive.w(18.8)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text('Didn’t received code? ',
-                          style: textStyle(
-                            size: 17,
-                            color: AppColors.textColor,
-                          )),
-                      InkWell(
-                        onTap: () {
-                          // final auth =
-                          //     Provider.of<FirebaseAuthProvider>(context, listen: false);
-                          // auth.resendOTP(
-                          //     phoneNumber: phoneNo, context: context);
-                        },
-                        child: Text('Resend ',
-                            style: textStyle(
-                              size: 17,
-                              color: AppColors.linkColor,
-                            )),
-                      )
-                    ],
-                  ),
-                )
+                resendOtp(context)
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Padding resendOtp(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: Adaptive.w(18.8)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text('Didn’t received code? ',
+              style: textStyle(
+                size: 17,
+                color: AppColors.textColor,
+              )),
+          InkWell(
+            onTap: () {
+              final auth =
+                  Provider.of<FirebaseAuthProvider>(context, listen: false);
+              auth.resendOtp(context, widget.phoneNo);
+            },
+            child: Text('Resend ',
+                style: textStyle(
+                  size: 17,
+                  color: AppColors.linkColor,
+                )),
+          )
+        ],
       ),
     );
   }
@@ -171,7 +182,7 @@ class ScreenOtpVerification extends StatelessWidget {
       child: Center(
         child: Pinput(
           obscureText: true,
-          obscuringCharacter: '*',
+          obscuringCharacter: '℗',
           controller: otpController,
           length: 6,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -193,7 +204,7 @@ class ScreenOtpVerification extends StatelessWidget {
           width: Adaptive.w(100),
           child: Text(
             textAlign: TextAlign.center,
-            'Enter the verification code we just sent on your Number $phoneNo',
+            'Enter the verification code we just sent on your Number ${widget.phoneNo}',
             style: textStyle(size: 15, thickness: FontWeight.w600),
           )),
     );
@@ -213,12 +224,12 @@ class ScreenOtpVerification extends StatelessWidget {
   InkWell backButton(BuildContext context) {
     return InkWell(
       onTap: () {
-        if (isFromRegistration) {
-          Navigator.pushReplacement(
-              context, CustomPageTransition(page: const ScreenRegister()));
+        if (widget.isFromRegistration) {
+          GoRouter.of(context)
+              .pushReplacementNamed(MyAppRouterConstants.registerPage);
         } else {
-          Navigator.pushReplacement(
-              context, CustomPageTransition(page: const ScreenLogin()));
+          GoRouter.of(context)
+              .pushReplacementNamed(MyAppRouterConstants.loginPage);
         }
       },
       child: Row(

@@ -1,14 +1,13 @@
+import 'package:drive_ease_main/view/core/app_router_const.dart';
 import 'package:drive_ease_main/view/core/appcolors.dart';
-import 'package:drive_ease_main/viewModel/connectivity_provider.dart';
-import 'package:drive_ease_main/view/screens/screenlogin.dart';
+import 'package:drive_ease_main/view/providers/connectivity_provider.dart';
+import 'package:drive_ease_main/view/providers/firebase_auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-
-import '../../viewModel/page_transition.dart';
-//import '../providers/auth_provider.dart';
-import '../widgets/networkerror.dart';
+import '../widgets/network_error.dart';
 import '../widgets/widgets.dart';
 
 class ScreenRegister extends StatefulWidget {
@@ -81,8 +80,10 @@ class _ScreenRegisterState extends State<ScreenRegister> {
                 networkDialog(context);
               } else {
                 phone = '+91$phone';
-                // await auth.verifyPhoneNumber(
-                //     context: context, phoneNumber: phone, name: name);
+                final auth =
+                    Provider.of<FirebaseAuthProvider>(context, listen: false);
+                auth.verifyPhoneNumberSignIn(
+                    context: context, phoneNumber: phone, name: name);
               }
             },
             child: Container(
@@ -183,8 +184,8 @@ class _ScreenRegisterState extends State<ScreenRegister> {
                 thickness: FontWeight.w500)),
         InkWell(
           onTap: () {
-            Navigator.pushReplacement(
-                context, CustomPageTransition(page: const ScreenLogin()));
+            GoRouter.of(context)
+                .pushReplacementNamed(MyAppRouterConstants.loginPage);
           },
           child: Text(" Log In Now",
               style: textStyle(

@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:developer';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:drive_ease_main/view/core/appcolors.dart';
+import 'package:drive_ease_main/view/providers/firebase_auth_provider.dart';
 import 'package:drive_ease_main/viewModel/utils_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +23,14 @@ class SplashScreenProvider extends ChangeNotifier {
       if (!isSigned) {
         return 'notSigned';
       } else {
-        final loggedIn = await util.checkLoginStatus();
+        final loggedIn = await util.checkLoginStatus(context);
         log(loggedIn.toString());
         if (!loggedIn) {
           return 'notloggedIn';
         } else {
+          final auth =
+              Provider.of<FirebaseAuthProvider>(context, listen: false);
+          auth.fetchDataFromFireStore(context);
           return 'home';
         }
       }
